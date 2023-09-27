@@ -23,16 +23,16 @@ namespace WebApi.Controllers
 
         // GET: api/Courses
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Course>>> GetCources()
+        public async Task<ActionResult<IEnumerable<Course>>> GetCourses()
         {
-            return await _context.Cources.ToListAsync();
+            return await _context.Courses.ToListAsync();
         }
 
         // GET: api/Courses/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Course>> GetCourse(Guid id)
         {
-            var course = await _context.Cources.FindAsync(id);
+            var course = await _context.Courses.FindAsync(id);
 
             if (course == null)
             {
@@ -78,7 +78,7 @@ namespace WebApi.Controllers
         [HttpPost]
         public async Task<ActionResult<Course>> PostCourse(Course course)
         {
-            _context.Cources.Add(course);
+            _context.Courses.Add(course);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetCourse", new { id = course.Id }, course);
@@ -88,13 +88,13 @@ namespace WebApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCourse(Guid id)
         {
-            var course = await _context.Cources.FindAsync(id);
+            var course = await _context.Courses.FindAsync(id);
             if (course == null)
             {
                 return NotFound();
             }
 
-            _context.Cources.Remove(course);
+            _context.Courses.Remove(course);
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -102,7 +102,7 @@ namespace WebApi.Controllers
 
         private bool CourseExists(Guid id)
         {
-            return _context.Cources.Any(e => e.Id == id);
+            return _context.Courses.Any(e => e.Id == id);
         }
     }
 }

@@ -18,8 +18,6 @@ namespace WebApi.Models
         public string? PhoneNumber { get; set; }
         [MaxLength(255)]
         public string? Address { get; set; }
-        public DateTime? Created { get; set; }
-        public DateTime? Updated { get; set; }
         public ICollection<Course> EnrolledCourses { get; set; } = new HashSet<Course>();
         public ICollection<Course> TaughtCourses { get; set; } = new HashSet<Course>();
     }
