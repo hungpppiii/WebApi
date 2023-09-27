@@ -11,8 +11,7 @@ namespace WebApi.Models
         public string Name { get; set; }
         [MaxLength(256)]
         public string? Description { get; set; }
-        public DateTime? Created { get; set; }
-        public DateTime? Updated { get; set; }
+        public Guid CourseId { get; set; }
         public Course Course { get; set; }
     }
 }

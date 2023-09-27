@@ -16,11 +16,10 @@ namespace WebApi.Models
         [Range(0, double.MaxValue)]
         public double Price { get; set; }
         public string? Description { get; set; }
-        public DateTime? Created { get; set; }
-        public DateTime? Updated { get; set; }
         public Guid TeacherId { get; set; }
         public virtual User Teacher { get; set; }
         public virtual ICollection<User> Students { get; set; } = new HashSet<User>();
         public virtual ICollection<Lesson> Lessons { get; set; } = new HashSet<Lesson>();
+        public virtual ICollection<Payment> Payments { get; set; } = new HashSet<Payment>();
     }
 }
