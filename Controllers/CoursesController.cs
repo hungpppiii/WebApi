@@ -6,33 +6,34 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApi.Data;
+using WebApi.Dtos;
 using WebApi.Models;
+using WebApi.Repositories;
+using WebApi.Request;
 
 namespace WebApi.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class CoursesController : ControllerBase
     {
-        private readonly WebDbContext _context;
+        private readonly ICourseRepository _courseRepository;
 
-        public CoursesController(WebDbContext context)
+        public CoursesController(ICourseRepository courseRepository)
         {
-            _context = context;
+            _courseRepository = courseRepository;
         }
 
-        // GET: api/Courses
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Course>>> GetCourses()
         {
-            return await _context.Courses.ToListAsync();
+            return Ok(await _courseRepository.GetAllAsync());
         }
 
-        // GET: api/Courses/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Course>> GetCourse(Guid id)
         {
-            var course = await _context.Courses.FindAsync(id);
+            var course = await _courseRepository.GetByIdAsync(id);
 
             if (course == null)
             {
@@ -42,67 +43,72 @@ namespace WebApi.Controllers
             return course;
         }
 
-        // PUT: api/Courses/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCourse(Guid id, Course course)
+        public async Task<IActionResult> UpdateCourse(Guid id, CourseDto request)
         {
-            if (id != course.Id)
-            {
-                return BadRequest();
-            }
+            var course = await _courseRepository.GetByIdAsync(id);
 
-            _context.Entry(course).State = EntityState.Modified;
+            course.Name = request.Name;
+            course.Price = request.Price;
+            course.Gradle = request.Gradle;
+            course.Description = request.Description ?? course.Description;
+            course.TeacherId = request.TeacherId;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CourseExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Courses
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Course>> PostCourse(Course course)
-        {
-            _context.Courses.Add(course);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetCourse", new { id = course.Id }, course);
-        }
-
-        // DELETE: api/Courses/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCourse(Guid id)
-        {
-            var course = await _context.Courses.FindAsync(id);
             if (course == null)
             {
                 return NotFound();
             }
 
-            _context.Courses.Remove(course);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _courseRepository.UpdateAsync(course);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw;
+            }
 
             return NoContent();
         }
 
-        private bool CourseExists(Guid id)
+        [HttpPost]
+        public async Task<ActionResult<CourseDto>> CreateCourse(CourseDto request)
         {
-            return _context.Courses.Any(e => e.Id == id);
+            var course = new Course
+            {
+                Name = request.Name,
+                Gradle = request.Gradle,
+                Price = request.Price,
+                Description = request.Description,
+                TeacherId = request.TeacherId,
+            };
+
+            await _courseRepository.AddAsync(course);
+
+            var courseDto = new CourseDto
+            {
+                Name = course.Name,
+                Gradle = course.Gradle,
+                Price = course.Price,
+                Description = course.Description,
+                TeacherId = course.TeacherId
+            };
+
+            return CreatedAtAction(nameof(GetCourse), new { id = course.Id }, courseDto);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCourse(Guid id)
+        {
+            var course = await _courseRepository.GetByIdAsync(id);
+            if (course == null)
+            {
+                return NotFound();
+            }
+
+            await _courseRepository.DeleteAsync(id);
+
+            return NoContent();
         }
     }
 }

@@ -1,9 +1,17 @@
+﻿using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using WebApi.Data;
+using WebApi.Repositories;
+using WebApi.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+builder.Services.AddScoped<ILessonRepository, LessonRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+
 builder.Services.AddDbContext<WebDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -23,6 +31,10 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+}
+else
+{
+    app.UseExceptionHandler("/error");
 }
 
 app.UseHttpsRedirection();
