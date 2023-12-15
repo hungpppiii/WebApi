@@ -1,16 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using WebApi.Constant;
 
 namespace WebApi.Dtos
 {
-    public class CourseDto
+    public class LessonDto
     {
         public Guid Id { get; set; }
         [MaxLength(100)]
         public string Name { get; set; }
-        public GradleType Gradle { get; set; }
-        [Range(0, double.MaxValue)]
-        public double Price { get; set; }
+        [MaxLength(256)]
         public string? Description { get; set; }
     }
 }

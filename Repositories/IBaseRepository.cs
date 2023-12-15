@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using WebApi.Models;
 
 namespace WebApi.Repositories
 {
@@ -12,5 +13,6 @@ namespace WebApi.Repositories
         Task UpdateAsync(TEntity entity);
         Task UpdateRangeAsync(IEnumerable<TEntity> entities);
         Task DeleteAsync(object id);
+        IQueryable<TEntity> Search(Expression<Func<TEntity, bool>>? predicate = null);
     }
 }

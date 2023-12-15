@@ -2,13 +2,14 @@
 using System;
 using System.Linq.Expressions;
 using WebApi.Data;
+using WebApi.Models;
 
 namespace WebApi.Repositories
 {
     public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : class
     {
-        private readonly WebDbContext _context;
-        private readonly DbSet<TEntity> _dbSet;
+        protected readonly WebDbContext _context;
+        protected readonly DbSet<TEntity> _dbSet;
 
         public BaseRepository(WebDbContext context)
         {
@@ -45,6 +46,11 @@ namespace WebApi.Repositories
         public async Task<IEnumerable<TEntity>> GetAsync(Expression<Func<TEntity, bool>> predicate)
         {
             return await _dbSet.Where(predicate).ToListAsync(); 
+        }
+
+        public IQueryable<TEntity> Search(Expression<Func<TEntity, bool>>? predicate = null)
+        {
+            return predicate != null ? _dbSet.Where(predicate) : _dbSet;
         }
 
         public async Task<TEntity> GetByIdAsync(object id)

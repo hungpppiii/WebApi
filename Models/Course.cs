@@ -20,6 +20,6 @@ namespace WebApi.Models
         public virtual User Teacher { get; set; }
         public virtual ICollection<User> Students { get; set; } = new HashSet<User>();
         public virtual ICollection<Lesson> Lessons { get; set; } = new HashSet<Lesson>();
-        public virtual ICollection<Payment> Payments { get; set; } = new HashSet<Payment>();
+        public virtual ICollection<PaymentCourse> PaymentCourses { get; set; } = new HashSet<PaymentCourse>();
     }
 }
