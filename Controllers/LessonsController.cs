@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApi.Data;
+using WebApi.Dtos;
 using WebApi.Models;
+using WebApi.Repositories;
 
 namespace WebApi.Controllers
 {
@@ -14,95 +17,88 @@ namespace WebApi.Controllers
     [ApiController]
     public class LessonsController : ControllerBase
     {
-        private readonly WebDbContext _context;
+        private readonly LessonRepository _lessonRepository;
+        private readonly IMapper _mapper;
 
-        public LessonsController(WebDbContext context)
+        public LessonsController(LessonRepository lessonRepository, IMapper mapper)
         {
-            _context = context;
+            _lessonRepository = lessonRepository;
+            _mapper = mapper;
         }
 
-        // GET: api/Lessons
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Lesson>>> GetLessons()
+        public async Task<ActionResult<IEnumerable<LessonDto>>> GetLessons([FromQuery] int pageNumber, int pageSize)
         {
-            return await _context.Lessons.ToListAsync();
+            var results = _mapper.Map<List<CourseDto>>(await _lessonRepository.Search().Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync());
+            return Ok(results);
         }
 
-        // GET: api/Lessons/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Lesson>> GetLesson(Guid id)
+        public async Task<ActionResult<LessonDto>> GetLesson(Guid id)
         {
-            var lesson = await _context.Lessons.FindAsync(id);
+            var lesson = await _lessonRepository.GetByIdAsync(id);
 
             if (lesson == null)
             {
                 return NotFound();
             }
 
-            return lesson;
+            return _mapper.Map<LessonDto>(lesson);
         }
 
-        // PUT: api/Lessons/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutLesson(Guid id, Lesson lesson)
+        public async Task<IActionResult> UpdateLesson(Guid id, LessonDto request)
         {
-            if (id != lesson.Id)
+            if (id != request.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(lesson).State = EntityState.Modified;
+            var lesson = await _lessonRepository.GetByIdAsync(id);
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!LessonExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            lesson.Name = request.Name;
+            lesson.Description = request.Description;
 
-            return NoContent();
-        }
-
-        // POST: api/Lessons
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Lesson>> PostLesson(Lesson lesson)
-        {
-            _context.Lessons.Add(lesson);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetLesson", new { id = lesson.Id }, lesson);
-        }
-
-        // DELETE: api/Lessons/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteLesson(Guid id)
-        {
-            var lesson = await _context.Lessons.FindAsync(id);
             if (lesson == null)
             {
                 return NotFound();
             }
 
-            _context.Lessons.Remove(lesson);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _lessonRepository.UpdateAsync(lesson);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw;
+            }
 
             return NoContent();
         }
 
-        private bool LessonExists(Guid id)
+        [HttpPost]
+        public async Task<ActionResult<LessonDto>> CreateLesson(LessonDto request)
         {
-            return _context.Lessons.Any(e => e.Id == id);
+            var lesson = _mapper.Map<Lesson>(request);
+
+            await _lessonRepository.AddAsync(lesson);
+
+            return CreatedAtAction(nameof(GetLesson), new { id = lesson.Id }, _mapper.Map<LessonDto>(lesson));
         }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteLesson(Guid id)
+        {
+            var lesson = await _lessonRepository.GetByIdAsync(id);
+            if (lesson == null)
+            {
+                return NotFound();
+            }
+
+            await _lessonRepository.DeleteAsync(id);
+
+            return NoContent();
+        }
+
     }
 }

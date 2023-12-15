@@ -12,6 +12,7 @@ namespace WebApi.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Lesson> Lessons { get; set; }
         public DbSet<Payment> Payments { get; set; }
+        public DbSet<PaymentCourse> PaymentCourses { get; set; }
         #endregion
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -36,6 +37,9 @@ namespace WebApi.Data
                 .HasMany(c => c.Students)
                 .WithMany(u => u.EnrolledCourses)
                 .UsingEntity(j => j.ToTable("StudentCourses"));
+
+            modelBuilder.Entity<PaymentCourse>()
+                .HasKey(pc => new { pc.CourseId, pc.PaymentId });
         }
 
         public override int SaveChanges()

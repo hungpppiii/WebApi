@@ -2,14 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WebApi.Data;
 using WebApi.Dtos;
 using WebApi.Models;
 using WebApi.Repositories;
-using WebApi.Request;
 
 namespace WebApi.Controllers
 {
@@ -18,20 +17,23 @@ namespace WebApi.Controllers
     public class CoursesController : ControllerBase
     {
         private readonly ICourseRepository _courseRepository;
+        private readonly IMapper _mapper;
 
-        public CoursesController(ICourseRepository courseRepository)
+        public CoursesController(ICourseRepository courseRepository, IMapper mapper)
         {
             _courseRepository = courseRepository;
+            _mapper = mapper;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Course>>> GetCourses()
+        public async Task<ActionResult<IEnumerable<CourseDto>>> GetCourses([FromQuery] int pageNumber, int pageSize)
         {
-            return Ok(await _courseRepository.GetAllAsync());
+            var results = _mapper.Map<List<CourseDto>>(await _courseRepository.Search().Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync());
+            return Ok(results);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Course>> GetCourse(Guid id)
+        public async Task<ActionResult<CourseDto>> GetCourse(Guid id)
         {
             var course = await _courseRepository.GetByIdAsync(id);
 
@@ -40,19 +42,23 @@ namespace WebApi.Controllers
                 return NotFound();
             }
 
-            return course;
+            return _mapper.Map<CourseDto>(course);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateCourse(Guid id, CourseDto request)
         {
+            if (id != request.Id)
+            {
+                return BadRequest();
+            }
+
             var course = await _courseRepository.GetByIdAsync(id);
 
             course.Name = request.Name;
             course.Price = request.Price;
             course.Gradle = request.Gradle;
             course.Description = request.Description ?? course.Description;
-            course.TeacherId = request.TeacherId;
 
             if (course == null)
             {
@@ -74,27 +80,13 @@ namespace WebApi.Controllers
         [HttpPost]
         public async Task<ActionResult<CourseDto>> CreateCourse(CourseDto request)
         {
-            var course = new Course
-            {
-                Name = request.Name,
-                Gradle = request.Gradle,
-                Price = request.Price,
-                Description = request.Description,
-                TeacherId = request.TeacherId,
-            };
+            var course = _mapper.Map<Course>(request);
 
             await _courseRepository.AddAsync(course);
 
-            var courseDto = new CourseDto
-            {
-                Name = course.Name,
-                Gradle = course.Gradle,
-                Price = course.Price,
-                Description = course.Description,
-                TeacherId = course.TeacherId
-            };
+            var result = _mapper.Map<CourseDto>(course);
 
-            return CreatedAtAction(nameof(GetCourse), new { id = course.Id }, courseDto);
+            return CreatedAtAction(nameof(GetCourse), new { id = course.Id }, result);
         }
 
         [HttpDelete("{id}")]
